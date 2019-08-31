@@ -103,7 +103,6 @@ class RiskScore:
         r2a_score_list = []
         tam = len(imp_feat)
         numObs = len(X_train)
-        r2a_score_dict ={}
         for i in range(1,tam+1):
             used_feat = imp_feat[:i]
 

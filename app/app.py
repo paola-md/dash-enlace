@@ -230,5 +230,5 @@ def update_table(n_clicks, value_tipo, value_estados, value_estado):
 
 ################################# MAIN ################################
 if __name__ == '__main__':
-    app.run_server(debug=True,host='0.0.0.0', port='80')
+    app.run_server(debug=True, host='0.0.0.0', port='80')
 
