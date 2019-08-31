@@ -28,7 +28,7 @@ from sklearn.linear_model import  LassoLarsIC
 print(dcc.__version__) # 0.6.0 or above is required
 external_stylesheets = [dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
+server = app.server
 
 
 
