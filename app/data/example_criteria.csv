@@ -1,0 +1,11 @@
+,Variable,Puntos,Condicion
+0,totalAlum,37.0,Menor a 49.6
+1,,74.0,Mayor o igual a 49.6 y menor que 127.0
+2,,111.0,Mayor o igual a 127.0 y menor que 271.4
+3,,148.0,Mayor a 271.4
+80,foreignStudents_usa,-10.0,Igual a cero
+81,,-40.0,Mayor a cero
+90,totalStaff,-26.0,Menor a 3.0
+91,,-52.0,Mayor o igual a 3.0 y menor que 8.9
+92,,-78.0,Mayor o igual a 8.9 y menor que 15.0
+93,,-104.0,Mayor a 15.0
