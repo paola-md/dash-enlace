@@ -16,6 +16,10 @@ from folium.plugins import MarkerCluster
 import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 
+#Files
+from flask import Flask, send_from_directory
+import os
+
 import pandas as pd
 import numpy as np
 
@@ -24,11 +28,18 @@ from enlaceInfo import RiskScore
 from sklearn.linear_model import  LassoLarsIC
 
 
+UPLOAD_DIRECTORY = "files"
+
+if not os.path.exists(UPLOAD_DIRECTORY):
+    os.makedirs(UPLOAD_DIRECTORY)
+
 #INICIALIZE
 print(dcc.__version__) # 0.6.0 or above is required
 external_stylesheets = [dbc.themes.BOOTSTRAP]
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-server = app.server
+server = Flask(__name__)
+app = dash.Dash(server=server, external_stylesheets=external_stylesheets)
+#server = app.server
+app.title= "Determinantes Logro Academico"
 
 #app.config.suppress_callback_exceptions = True
 
@@ -133,7 +144,8 @@ table =  html.Div([
             #'overflowY': 'scroll',
             'border': 'thin lightgrey solid'
             },
-           )
+           ),
+           html.A('Descripción de variables', href="/download/variables.pdf"),
     ], style={'width': '49%', 'display': 'inline-block'}),
        
 alerta = dbc.Alert(
@@ -282,6 +294,10 @@ def update_date_dropdown(tipo):
     else:
         edo = pd.read_csv("data/estados.csv", encoding = 'latin-1')
     return edo.to_dict("records"), edo[1:].to_dict("records")
+
+@server.route("/download/<path:path>")
+def download(path):
+    return send_from_directory(UPLOAD_DIRECTORY, path, as_attachment=True)
 
 
 ################################# MAIN ################################
