@@ -184,7 +184,7 @@ class RiskScore:
         dicc_results["criteria"] = df_criteria
         return dicc_results
  
-    def get_state_type(self, estados, tipo):
+    def get_state_type(self, lista_estados, tipo):
         if tipo == "G" or tipo == "Pri" or tipo == "Pub" :
             df = pd.read_csv('data/general_clear.csv')
         if tipo == "I":
@@ -196,12 +196,12 @@ class RiskScore:
         if tipo == "Pub":
             df = df[df["control"]==1]
         
-        estados = [estados]
-        if len(estados)>0 and estados[0]>0:
+        if len(lista_estados)>0 and lista_estados[0]>0:
             df["edo"] = df.cct.str[:2].astype("int")
-            df = df[df['edo'].isin(estados)]
+            df = df[df['edo'].isin(lista_estados)]
+            df = df.drop(["edo"], axis = 1)
 
-        return df.drop(["edo"], axis = 1)
+        return df
  
     def get_all_info_filtered(self, estados, tipo, reg):
         df = self.get_state_type(estados, tipo)

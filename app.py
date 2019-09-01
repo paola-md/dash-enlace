@@ -30,11 +30,11 @@ external_stylesheets = [dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 
-
+#app.config.suppress_callback_exceptions = True
 
 
 # ============================ METHODS ============================
-# Read in Travel Report Data
+# Por default: General
 df = pd.read_csv('data/example_criteria_2.csv')
 edo = pd.read_csv("data/estados.csv", encoding = 'latin-1')
 # ============================ ELEMENTS ============================
@@ -43,8 +43,8 @@ estado_dropdown = dbc.FormGroup(
         dbc.Label("Selecciona un estado"),
         dcc.Dropdown(
             id="estado_dropdown",
-            options=edo.to_dict("records"),
-            value="Nacional",
+            #options=edo.to_dict("records"),
+            value=0,
         ),
     ]
 )
@@ -54,7 +54,7 @@ estado_checklist = dbc.FormGroup(
         #dbc.Label("Extras:"),
         dbc.Checklist(
             id="estado_checklist",
-            options=edo[1:].to_dict("records"),
+            #options=edo[1:].to_dict("records"),
             value=[],
             inline=True,
         ),
@@ -93,7 +93,7 @@ tipoEscuela = dbc.FormGroup(
     [
         dbc.Label("Tipo de escuela:"),
         dbc.RadioItems(
-            id="tipo_radio",
+            id="tipoEscuela",
             options=[
                 {"label": "General", "value": "G"},
                 {"label": "Indigena", "value": "I"},
@@ -162,11 +162,15 @@ layout_results =  html.Div(
             ], justify="center",
         ),
         dbc.Row([
-            dbc.Col(estado_dropdown, width={"size":4, "offset":1}, align="center"),
+            dbc.Col([
+                estado_dropdown,
+                html.Div(html.P(id="radioitems-checklist-output")),
+            ], width={"size":4, "offset":1}, align="center"),
             dbc.Col(tipoEscuela, width={"size":6}, align="center"),
             ]
         ),
         dbc.Row(
+            #html.Div(html.P(id="radioitems-checklist-output")),
             dbc.Col(fade, width={"size":10, "offset":1}, align="center"),
             #dbc.Col(submit, align="center",width={"size":2}),
             ),
@@ -207,7 +211,7 @@ def toggle_fade(n, is_in):
     [Output('criteria_table', "data"),
     Output("map", "srcDoc")],
     [Input('button_envia', "n_clicks")],
-    [State('tipo_radio', "value"),
+    [State('tipoEscuela', "value"),
      State("estado_checklist", "value"),
      State("estado_dropdown", "value")])
 def update_table(n_clicks, value_tipo, value_estados, value_estado):
@@ -215,17 +219,69 @@ def update_table(n_clicks, value_tipo, value_estados, value_estado):
     if n_clicks is None:
         raise PreventUpdate
     else: 
-        estado = int(value_estado)
+        if len(value_estados) == 0 and value_estado == None:
+            raise PreventUpdate
+
+        lista_estados = value_estados
+        if value_estado != None:
+            estado = int(value_estado)
+        #Caso 1: Solo estado 
+        if len(lista_estados) == 0 and value_estado != None:
+            estado = int(value_estado)
+            lista_final = [estado]
+        #Caso 2: Solo en lista
+        if len(lista_estados) > 0 and value_estado == None:
+            lista_estados = list(map(int, lista_estados))
+            lista_final = lista_estados
+        #Caso 3: En ambos
+        if len(lista_estados) > 0 and value_estado != None:
+            estado = int(value_estado)
+            lista_final = [estado]
+            lista_estados = list(map(int, lista_estados))
+            lista_final = lista_final + lista_estados #Nacional va primero
         tipo = value_tipo
         reg = LassoLarsIC(criterion='aic')
         info_rs = RiskScore()
-        dicc_results = info_rs.get_all_info_filtered(estado,tipo, reg)
+        dicc_results = info_rs.get_all_info_filtered(lista_final,tipo, reg)
         criteria = dicc_results["criteria"].to_dict('records')
      
-        nombre = "mapas/mapa_"+ tipo + "_" + str(estado) + ".html"
+        id_map = int(''.join(map(str,lista_final)))
+        nombre = "mapas/mapa_"+ tipo + "_" + str(id_map) + ".html"
         info_rs.get_map(dicc_results["risk"], nombre)
         return criteria, open(nombre, 'r').read()
 
+@app.callback(
+    Output("radioitems-checklist-output", "children"),
+    [
+        Input("estado_checklist", "value"),
+        Input("estado_dropdown", "value"),
+    ],
+)
+def on_form_change(checklist_value, n_drop):
+    error = "Por favor selecciona un estado."
+
+    n_checkboxes = len(checklist_value)
+
+    if n_drop == None and n_checkboxes ==0:
+        output_string = error
+    else:
+        output_string = ""
+
+    return output_string
+
+
+##Update Dropdown
+@app.callback(
+    [Output('estado_dropdown', 'options'),
+    Output('estado_checklist', 'options')],
+    [Input('tipoEscuela', 'value')]
+)
+def update_date_dropdown(tipo):
+    if tipo == "I":
+        edo = pd.read_csv("data/estados_ind.csv", encoding = 'latin-1')
+    else:
+        edo = pd.read_csv("data/estados.csv", encoding = 'latin-1')
+    return edo.to_dict("records"), edo[1:].to_dict("records")
 
 
 ################################# MAIN ################################
