@@ -3,6 +3,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
+from textwrap import dedent
+
 import dash_table
 from datetime import datetime as dt
 from datetime import date, timedelta
@@ -37,87 +39,22 @@ if not os.path.exists(UPLOAD_DIRECTORY):
 print(dcc.__version__) # 0.6.0 or above is required
 external_stylesheets = [dbc.themes.BOOTSTRAP]
 server = Flask(__name__)
-app = dash.Dash(server=server, external_stylesheets=external_stylesheets)
+app = dash.Dash(server=server,  meta_tags=[{"name": "viewport", "content": "width=device-width"}])
 #server = app.server
 app.title= "Determinantes Logro Academico"
 
-#app.config.suppress_callback_exceptions = True
+app.config.suppress_callback_exceptions = True
 
 
 # ============================ METHODS ============================
 # Por default: General
 df = pd.read_csv('data/example_criteria_2.csv')
 edo = pd.read_csv("data/estados.csv", encoding = 'latin-1')
+
+#============================= LAYOUT =============================
+
+
 # ============================ ELEMENTS ============================
-estado_dropdown = dbc.FormGroup(
-    [
-        dbc.Label("Selecciona un estado"),
-        dcc.Dropdown(
-            id="estado_dropdown",
-            #options=edo.to_dict("records"),
-            value=0,
-        ),
-    ]
-)
-
-estado_checklist = dbc.FormGroup(
-    [
-        #dbc.Label("Extras:"),
-        dbc.Checklist(
-            id="estado_checklist",
-            #options=edo[1:].to_dict("records"),
-            value=[],
-            inline=True,
-        ),
-    ]
-)
-
-button = html.Div(
-    [
-        dbc.Button("Enviar", id="button_envia", outline=True, color="primary", className="mr-1"),
-        html.Span(id="button_2", style={"vertical-align": "middle"}),
-    ]
-)
-
-fade = html.Div(
-    [
-        dbc.Button("Agregar más estados", id="fade-button", className="mb-3"),
-        dbc.Fade(
-            dbc.Card(
-                dbc.CardBody(
-                    estado_checklist
-                    #html.P(
-                    #    "This content fades in and out", className="card-text"
-                    #)
-                )
-            ),
-            id="fade",
-            is_in=False,
-            appear=False,
-        ),
-    ]
-)
-
-
-
-tipoEscuela = dbc.FormGroup(
-    [
-        dbc.Label("Tipo de escuela:"),
-        dbc.RadioItems(
-            id="tipoEscuela",
-            options=[
-                {"label": "General", "value": "G"},
-                {"label": "Indigena", "value": "I"},
-                {"label": "Comunitaria", "value": "C"},
-                {"label": "General -Publica", "value": "Pub"},
-                {"label": "General -Privada", "value": "Pri"},
-            ],
-            value="G",
-            inline=True,
-        ),
-    ]
-)
-
 table =  html.Div([
         dash_table.DataTable(
             style_data={'whiteSpace': 'normal'},
@@ -139,72 +76,265 @@ table =  html.Div([
                 'width': '30%'},
             ],
             style_table={
-            'height': '300px',
-            'width': "500px",
+            'height': '350px',
+            #'width': "500px",
             #'overflowY': 'scroll',
             'border': 'thin lightgrey solid'
             },
+            style_as_list_view=True,
+            style_cell={'padding': '5px'},
+            style_header={
+                'backgroundColor': 'white',
+                'fontWeight': 'bold'
+            },
+     
+
+
            ),
            html.A('Descripción de variables', href="/download/variables.pdf"),
-    ], style={'width': '49%', 'display': 'inline-block'}),
-       
-alerta = dbc.Alert(
-            "Hello! I am an alert that doesn't fade in or out",
-            id="alert-no-fade",
-            dismissable=True,
-            fade=False,
-            is_open=True,
-        ),
+    ],  className="pretty_container five columns",)
+    #style={'width': '49%', 'display': 'inline-block'}),
 
-mensaje = html.Div([
-    dcc.Input(id='my-id', value='initial value', type='text'),
-    html.Div(id='my-div')
-]),
+def markdown_popup():
+    return html.Div(
+        id="markdown",
+        className="modal",
+        style={"display": "none"},
+        children=(
+            html.Div(
+                className="markdown-container",
+                children=[
+                    html.Div(
+                        className="close-container",
+                        children=html.Button(
+                            "Cerrar",
+                            id="markdown_close",
+                            n_clicks=0,
+                            className="closeButton",
+                        ),
+                    ),
+                    html.Div(
+                        className="markdown-text",
+                        children=[
+                            dcc.Markdown(
+                                children=dedent(
+                                    """
+                                ##### Documentación                                
+                                El proyecto se elaboró utilizando la metodología CRISP-DM. Para aprender más, consultar el [reporte final]. 
+
+                                #### Bases de datos 
+                                ###### Originales
+                                El desempeño academico se definió como resultados a nivel escuela del ENLACE. 
+                                Las bases historicas están disponibles [aquí].
+
+                                Las características de las escuelas se obtuvieron del Censo de Escuelas,
+                                Maestros y Alumnos de Educación Básica y Especial (disponible para descargar [aquí](http://cemabe.inegi.org.mx/)) y del Formato Estadístico 911
+                                (disponible para descargar [aquí](https://www.dropbox.com/sh/h6gjchdww5d9js4/AADsEaVl6zTr0bwMogMxNw1Fa?dl=0)).
+
+                                ###### Generadas
+                                Se generaron tres tablas para cada tipo de escuela, disponibles [aquí](https://www.dropbox.com/sh/w0ypo3927st37lk/AAANQnov3alEnQYMaBpj2D6ca?dl=0) 
+                                
+                                #### Códigos 
+                                ###### Del proyecto
+                                El preprocesamiento de datos, integración de tablas y creación de nuevas variables se hizo en Stata. 
+                                Mientras que el análisis de datos, selección de variables y modelos se implementaron en Python.
+                                Para aprender más, visita el [repositorio del proyecto](https://github.com/paola-md/data-product-enlace)     
+
+                                ###### De la aplicación
+                                Este aplicación utiliza el framework Dash de Python que estaba basado en Flask y React. 
+                                Para aprender más, visita el [repositorio de la aplicación](https://github.com/paola-md/predict-enlace)
+
+                                """
+                                )
+                            )
+                        ],
+                    ),
+                ],
+            )
+        ),
+    )
+
+
 ######################## START RESULTS ########################
-layout_results =  html.Div(
+
+layout = dict(
+    autosize=True,
+    automargin=True,
+    margin=dict(l=30, r=30, b=20, t=40),
+    hovermode="closest",
+    plot_bgcolor="#F9F9F9",
+    paper_bgcolor="#F9F9F9",
+    legend=dict(font=dict(size=10), orientation="h"),
+    title="Satellite Overview",
+)
+
+app.layout = html.Div(
     [
-        dbc.Row(
+        dcc.Store(id="aggregate_data"),
+        # empty Div to trigger javascript file for graph resizing
+        html.Div(id="output-clientside"),
+        html.Div(
             [
-                dbc.Col(
-                   # html.Div(id='my-div'),
-                    html.Div([
-                        html.H1("Esto es una prueba"),
-                    ]) ,width="auto", align="center"
+                html.Div(
+                    [
+                        html.Img(
+                            src=app.get_asset_url("logo-ITAM.png"),
+                            id="plotly-image",
+                            style={
+                                "height": "60px",
+                                "width": "auto",
+                                "margin-bottom": "25px",
+                            },
+                        )
+                    ],
+                    className="one-third column",
                 ),
-            ], justify="center",
-        ),
-        dbc.Row([
-            dbc.Col([
-                estado_dropdown,
-                html.Div(html.P(id="radioitems-checklist-output")),
-            ], width={"size":4, "offset":1}, align="center"),
-            dbc.Col(tipoEscuela, width={"size":6}, align="center"),
-            ]
-        ),
-        dbc.Row(
-            #html.Div(html.P(id="radioitems-checklist-output")),
-            dbc.Col(fade, width={"size":10, "offset":1}, align="center"),
-            #dbc.Col(submit, align="center",width={"size":2}),
-            ),
-        dbc.Row(
-            dbc.Col(button, align="center",width={"size":2, "offset":5}),
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.H3(
+                                    "Producto de datos para la toma de decisión en programas sociales para escuelas primarias en México",
+                                    style={"margin-bottom": "0px"},
+                                ),
+                                html.H5(
+                                    "Calificaciones de riesgo", style={"margin-top": "0px"}
+                                ),
+                            ]
+                        )
+                    ],
+                    className="one-half column",
+                    id="title",
+                ),
+                html.Div(
+                    [
+                        html.Button("Más información", id="learn-more-button", n_clicks=0),
+                    ],
+                    className="one-third column",
+                    id="button",
+                ),
+            ],
+            id="header",
+            className="row flex-display",
+            style={"margin-bottom": "35px"},
         ),
 
-        dbc.Row(
+        html.Div(
             [
-                dbc.Col(
-                    html.Div([
-                        html.Iframe(id = "map", srcDoc = open("mapas/mapa_base.html", 'r').read(), width=500, height=300),
-                        ]), width={"size":4, "offset":1},align="center"
+                
+                html.Div(
+                    [
+                     html.H5("Acerca del proyecto",
+                    className="control_label"),
+                    html.P("El objetivo de la aplicación es proporcionar información para la toma de decisiones de politicas públicas y asignación de programas sociales educativos en primarias de México. La aplicación genera criterios de riesgo de desempeño escolar para identificar cuáles escueles tienen bajo desempeño y por qué. Mientras más alta sea la calificación, peor es el desempeño de la escuela.",
+                    className="control_label"),                
+                    html.H5("Así que, ¿cómo funciona?",
+                    className="control_label"),
+                    html.P("Al seleccionar estados y tipo de escuela, la aplicación escoge las variables más importantes y utilizando los coeficientes de una regresión lineal con regularizador Lasso, criterio de información Akaike y algoritmo LARS crea el criterio de riesgo y asigna una calificación a cada escuela.",
+                    className="control_label"),
+                    ],  
+                    className="pretty_container seven columns"),
+                html.Div([
+                html.P(
+                    "Selecciona uno o más estados:",
+                    className="control_label",
+                ),   
+                dcc.Dropdown(
+                    id="estado_dropdown",
+                    #options=edo.to_dict("records"),
+                    value=0,
+                    className="dcc_control",
+                    multi=True,
                 ),
-                dbc.Col(table, width={"size":6,"offset":1 }, align="center"),
-            ]
-        )
-    ]
+                html.P(id="radioitems-checklist-output",
+                        className="control_label"),
+
+                html.P(
+                    "Selecciona un tipo de escuela",
+                    className="control_label",
+                ), 
+                dcc.RadioItems(
+                    id="tipoEscuela",
+                    options=[
+                        {"label": "General", "value": "G"},
+                        {"label": "Indigena", "value": "I"},
+                        {"label": "Comunitaria", "value": "C"},
+                        {"label": "General - Pública", "value": "Pub"},
+                        {"label": "General - Privada", "value": "Pri"},
+                    ],
+                    value="G",
+                    #labelStyle={"display": "inline-block"},
+                    className="dcc_control",
+                ),                
+                html.P(
+                    "",
+                    className="control_label",
+                ), 
+                html.Button("Obtener resultados", id="button_envia", className="control_center"),
+
+                  
+                ], 
+                className="pretty_container five columns"),
+
+            ], 
+            className="row flex-display",
+            ),
+
+        html.Div(
+            [
+                table,
+                html.Div(
+                    [html.Iframe(id = "map", srcDoc = open("mapas/mapa_base.html", 'r').read(), width=650, height=350)],
+                     className="pretty_container seven columns",
+                ),
+                
+            ],
+            className="row flex-display",
+        ),
+
+
+        html.Div(
+            [
+                html.Div(
+                    [html.H6(id="calif-escuela"), 
+                    html.P("Calificaciones escuelas"),
+                    html.A('Descargar', id='link_descarga',  href="/results/info.csv"), ],
+                    id="wells",
+                    className="mini_container",
+                ),
+                html.Div(
+                    [html.H6(id="num_escuelas"), html.P("Número de escuelas en subconjunto")],
+                    id="esc",
+                    className="mini_container",
+                ),
+                html.Div(
+                    [html.H6(id="r2a"), html.P("R cuadrado ajustado")],
+                    id="r2a_div",
+                    className="mini_container",
+                ),
+                html.Div(
+                    [html.H6(id="rmse"), html.P("Error cuadrático medio")],
+                    id="rmse_div",
+                    className="mini_container",
+                ),
+            ],
+            id="info-container",
+            className="row container-display",
+        ),
+         markdown_popup(),
+    ],
+    id="mainContainer",
+    style={"display": "flex", "flex-direction": "column"},
 )
 
 
-app.layout = layout_results
+
+
+
+
+
+
+#app.layout = layout_results
 
 @app.callback(
     Output("fade", "is_in"),
@@ -221,36 +351,26 @@ def toggle_fade(n, is_in):
 #and later download csv
 @app.callback(
     [Output('criteria_table', "data"),
-    Output("map", "srcDoc")],
+    Output("map", "srcDoc"),
+    Output('link_descarga', "href"),
+    Output('r2a','children'),
+    Output('num_escuelas','children'),
+    Output('rmse','children'),],
     [Input('button_envia', "n_clicks")],
     [State('tipoEscuela', "value"),
-     State("estado_checklist", "value"),
      State("estado_dropdown", "value")])
-def update_table(n_clicks, value_tipo, value_estados, value_estado):
+def update_results(n_clicks, value_tipo, value_estados):
     #return n_clicks
     if n_clicks is None:
         raise PreventUpdate
     else: 
-        if len(value_estados) == 0 and value_estado == None:
+        if value_estados == []:
             raise PreventUpdate
 
-        lista_estados = value_estados
-        if value_estado != None:
-            estado = int(value_estado)
-        #Caso 1: Solo estado 
-        if len(lista_estados) == 0 and value_estado != None:
-            estado = int(value_estado)
-            lista_final = [estado]
-        #Caso 2: Solo en lista
-        if len(lista_estados) > 0 and value_estado == None:
-            lista_estados = list(map(int, lista_estados))
-            lista_final = lista_estados
-        #Caso 3: En ambos
-        if len(lista_estados) > 0 and value_estado != None:
-            estado = int(value_estado)
-            lista_final = [estado]
-            lista_estados = list(map(int, lista_estados))
-            lista_final = lista_final + lista_estados #Nacional va primero
+        if type(value_estados) == int:
+            value_estados = [value_estados]
+        lista_final = list(map(int, value_estados))
+    
         tipo = value_tipo
         reg = LassoLarsIC(criterion='aic')
         info_rs = RiskScore()
@@ -258,23 +378,29 @@ def update_table(n_clicks, value_tipo, value_estados, value_estado):
         criteria = dicc_results["criteria"].to_dict('records')
      
         id_map = int(''.join(map(str,lista_final)))
-        nombre = "mapas/mapa_"+ tipo + "_" + str(id_map) + ".html"
-        info_rs.get_map(dicc_results["risk"], nombre)
-        return criteria, open(nombre, 'r').read()
+        nombre_map = "mapas/mapa_"+ tipo + "_" + str(id_map) + ".html"
+        info_rs.get_map(dicc_results["risk"], nombre_map)
+        abre_mapa = open(nombre_map, 'r').read()
+        
+        #Guarda resultados
+        nombre_rs = "files/risk_"+ tipo + "_" + str(id_map) + ".csv"
+        dicc_results["risk"].to_csv(nombre_rs, index=False)
+        update_link = "/download/risk_"+ tipo + "_" + str(id_map) + ".csv"
+
+        r2a_res = dicc_results["r2a"].round(2)
+        rmse_res = dicc_results["rmse"].round(2)
+        num_escu = format(len(dicc_results["risk"]), ',')
+        return criteria, abre_mapa, update_link, r2a_res, num_escu, rmse_res
 
 @app.callback(
     Output("radioitems-checklist-output", "children"),
     [
-        Input("estado_checklist", "value"),
         Input("estado_dropdown", "value"),
     ],
 )
-def on_form_change(checklist_value, n_drop):
-    error = "Por favor selecciona un estado."
-
-    n_checkboxes = len(checklist_value)
-
-    if n_drop == None and n_checkboxes ==0:
+def on_form_change(n_drop):
+    error = "Por favor, selecciona un estado."
+    if n_drop == []:
         output_string = error
     else:
         output_string = ""
@@ -282,10 +408,8 @@ def on_form_change(checklist_value, n_drop):
     return output_string
 
 
-##Update Dropdown
 @app.callback(
-    [Output('estado_dropdown', 'options'),
-    Output('estado_checklist', 'options')],
+    [Output('estado_dropdown', 'options')],
     [Input('tipoEscuela', 'value')]
 )
 def update_date_dropdown(tipo):
@@ -293,11 +417,32 @@ def update_date_dropdown(tipo):
         edo = pd.read_csv("data/estados_ind.csv", encoding = 'latin-1')
     else:
         edo = pd.read_csv("data/estados.csv", encoding = 'latin-1')
-    return edo.to_dict("records"), edo[1:].to_dict("records")
+    resp = [edo.to_dict("records")]
+    return resp
 
 @server.route("/download/<path:path>")
 def download(path):
-    return send_from_directory(UPLOAD_DIRECTORY, path, as_attachment=True)
+    if path == "info.csv":
+        raise PreventUpdate
+    else:
+        return send_from_directory(UPLOAD_DIRECTORY, path, as_attachment=True)
+
+
+# Learn more popup
+@app.callback(
+    Output("markdown", "style"),
+    [Input("learn-more-button", "n_clicks"), Input("markdown_close", "n_clicks")],
+)
+def update_click_output(button_click, close_click):
+    ctx = dash.callback_context
+    prop_id = ""
+    if ctx.triggered:
+        prop_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
+    if prop_id == "learn-more-button":
+        return {"display": "block"}
+    else:
+        return {"display": "none"}
 
 
 ################################# MAIN ################################

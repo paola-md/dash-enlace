@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.linear_model import  LassoLarsIC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
+from sklearn.metrics import mean_squared_error as rmse
 from sklearn.ensemble import RandomForestRegressor
 from math import ceil
 
@@ -129,7 +130,7 @@ class RiskScore:
         reg.fit(X_train.astype('float32'), y_train)
         y_pred = reg.predict(X_test)
         r2a_model = self.r2a_score(y_test, y_pred, len(goodVars), numObs)
-
+        rmse_model = rmse(y_test, y_pred)
 
         #Get the coefficient of the important variables
         if reg.coef_[0].size  == 1:
@@ -178,6 +179,7 @@ class RiskScore:
 
         dicc_results = {}
         dicc_results["r2a"] = r2a_model
+        dicc_results["rmse"] = rmse_model
         dicc_results["coefs"] = df_coefs
         dicc_results["perc"] = df_perc
         dicc_results["risk"] = df_risk
